@@ -1,0 +1,30 @@
+{
+  "name": "twitter-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node build/index.js",
+    "dev": "tsc-watch --onSuccess \"npm start\"",
+    "build": "tsc -p ."
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.7",
+    "tsc-watch": "^6.2.0",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.11.8",
+    "@apollo/server": "^4.11.0",
+    "@prisma/client": "^5.19.1",
+    "@types/node": "^22.5.5",
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "graphql": "^16.9.0",
+    "jsonwebtoken": "^9.0.2",
+    "prisma": "^5.19.1",
+    "ts-node": "^10.9.2"
+  }
+}
