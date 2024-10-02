@@ -29,9 +29,6 @@ export const mutations = {
 
 export const queries = {
   getAllTweets: async (parnt: any, args: any, context: GraphqlContext) => {
-    if (!context.user) {
-      return null;
-    }
     const tweets = (await prisma.tweet.findMany({
       orderBy: {
         createdAt: 'desc',
@@ -41,9 +38,6 @@ export const queries = {
     return tweets;
   },
   getTweet: async (_: any, { id }: { id: string }, context: GraphqlContext) => {
-    if (!context.user) {
-      return null;
-    }
     return await prisma.tweet.findUnique({
       where: {
         id,

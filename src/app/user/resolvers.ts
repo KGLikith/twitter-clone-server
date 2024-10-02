@@ -38,11 +38,13 @@ const queries = {
       }
     );
 
+    console.log(data);
     const user = await prisma.user.findUnique({
       where: {
         email: data.email,
       },
     });
+    console.log(user);
 
     if (!user) {
       const user = await prisma.user.create({
@@ -72,18 +74,32 @@ const queries = {
     });
     return user;
   },
+  getCurrentUserById: async (
+    parent: any,
+    { id }: { id: string },
+    context: GraphqlContext
+  ) => {
+    const user = await prisma.user.findUnique({
+      where: {
+        id,
+      },
+    });
+    return user;
+  },
 };
 
 const userResolverTweet = {
-  User:{
-    tweets:async(parent:User)=>{
-      return await prisma.tweet.findMany({
-        where:{
-          userId:parent.id
-        }
-      })
-    }
-  }
-}
+  User: {
+    tweets: async (parent: User) => {
+      const tweets = await prisma.tweet.findMany({
+        where: {
+          userId: parent.id,
+        },
+      });
+      if (!tweets) return [];
+      return tweets;
+    },
+  },
+};
 
-export const resolvers = { queries,userResolverTweet };
+export const resolvers = { queries, userResolverTweet };
