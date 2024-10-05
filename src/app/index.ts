@@ -5,7 +5,6 @@ import cors from "cors";
 import { User } from "./user";
 import JWTService from "./services/jwt";
 import { Tweet } from "./tweet";
-import prisma from "../clients/db";
 
 export default async function initServer<GraphqlContext>() {
   const app = express();

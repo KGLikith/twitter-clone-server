@@ -1,59 +1,79 @@
 import { Tweet } from "@prisma/client";
 import prisma from "../../clients/db";
 import { GraphqlContext } from "../../interfaces";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import UserService from "../services/user";
+import TweetServices from "../services/tweet";
 
 interface CreateTweetDataPayload {
   content: string;
   imageUrl?: string;
+  userId: string;
 }
 
+const s3Client = new S3Client({ region: process.env.AWS_DEFAULT_REGION });
+
 export const mutations = {
-  createTweet: async (
-    _: any,
-    { payload }: { payload: CreateTweetDataPayload },
-    context: GraphqlContext
-  ) => {
+  createTweet: async (_: any,{ payload }: { payload: CreateTweetDataPayload },context: GraphqlContext) => {
     if (!context.user) {
       throw new Error("Unauthorized");
     }
-    const tweet = await prisma.tweet.create({
-      data: {
-        content: payload.content,
-        imageUrl: payload.imageUrl,
-        user: { connect: { id: context.user.id } },
-      },
+    return await TweetServices.createTweet({
+      ...payload,
+      userId: context.user.id,
     });
-    return tweet;
   },
 };
 
 export const queries = {
   getAllTweets: async (parnt: any, args: any, context: GraphqlContext) => {
-    const tweets = (await prisma.tweet.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    }));
-    console.log(tweets);
-    return tweets;
+    return await TweetServices.getAllTweets();
   },
+
   getTweet: async (_: any, { id }: { id: string }, context: GraphqlContext) => {
-    return await prisma.tweet.findUnique({
-      where: {
-        id,
-      },
-    });
+    return await TweetServices.getTweetById(id);
+  },
+
+  getSignedURLForTweet: async (
+    _: any,
+    { imageType, imageName }: { imageType: string; imageName: string },
+    context: GraphqlContext
+  ) => {
+    if (!context.user || !context.user.id) {
+      throw new Error("Unauthorized");
+    }
+    const allowedImageTypes = [
+      "png",
+      "jpg",
+      "jpeg",
+      "webp",
+      "image/png",
+      "image/jpg",
+      "image/jpeg",
+      "image/webp",
+    ];
+    if (!allowedImageTypes.includes(imageType)) {
+      throw new Error("Invalid Image Type");
+    } else {
+      const putObjectCommand = new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME || "",
+        ContentType: imageType,
+        Key: `uploads/${
+          context.user.id
+        }/tweets/${imageName}-${Date.now().toString()}.${imageType}`,
+      });
+
+      const signedUrl = await getSignedUrl(s3Client, putObjectCommand);
+      return signedUrl;
+    }
   },
 };
 
 export const tweetResolverUser = {
   Tweet: {
     user: async (parent: Tweet) => {
-      return await prisma.user.findUnique({
-        where: {
-          id: parent.userId,
-        },
-      });
+      return await UserService.getUserById(parent.userId);
     },
   },
 };
