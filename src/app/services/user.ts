@@ -156,7 +156,7 @@ class UserService {
       });
     }
 
-    console.log("fol", followers);
+    // console.log("fol", followers);
 
     followers.forEach((el: any) => {
       if (
@@ -175,7 +175,7 @@ class UserService {
       `RECOMMENDEDUSERS:${user.id}`,
       JSON.stringify(recommendedUsers),'EX',3600
     );
-    console.log("rec", recommendedUsers);
+    // console.log("rec", recommendedUsers);
     return recommendedUsers;
   }
 }
