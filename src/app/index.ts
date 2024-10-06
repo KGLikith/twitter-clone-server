@@ -20,6 +20,7 @@ export default async function initServer<GraphqlContext>() {
           ${Tweet.queries}
         }
         type Mutation{
+          ${User.mutations}
           ${Tweet.mutations}
         }
     `,
@@ -28,7 +29,8 @@ export default async function initServer<GraphqlContext>() {
         ...User.resolvers.queries,
         ...Tweet.resolvers.queries,
       },
-      Mutation:{
+      Mutation: {
+        ...User.resolvers.mutations,
         ...Tweet.resolvers.mutations,
       },
       ...Tweet.resolvers.tweetResolverUser,
@@ -42,7 +44,6 @@ export default async function initServer<GraphqlContext>() {
     "/graphql",
     expressMiddleware(gqlserver, {
       context: async ({ req, res }) => {
-        console.log(req.headers);
         return {
           user: req.headers.authorization
             ? await JWTService.decodeToken(
