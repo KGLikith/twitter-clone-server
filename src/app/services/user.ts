@@ -1,6 +1,8 @@
 import axios from "axios";
 import prisma from "../../clients/db";
 import JWTService from "./jwt";
+import redisClient from "../../clients/redis/db";
+import { User } from "@prisma/client";
 
 interface GoogleTokenInfo {
   iss: string;
@@ -37,13 +39,11 @@ class UserService {
       }
     );
 
-    console.log(data);
     const user = await prisma.user.findUnique({
       where: {
         email: data.email,
       },
     });
-    console.log(user);
 
     if (!user) {
       const user = await prisma.user.create({
@@ -64,13 +64,119 @@ class UserService {
   }
 
   public static async getUserById(id: string) {
+    const cachedUser = await redisClient.get(`USER:${id}`);
 
+    if (cachedUser) {
+      return JSON.parse(cachedUser);
+    }
     const user = await prisma.user.findUnique({
       where: {
         id,
       },
     });
+    await redisClient.set(`USER:${id}`, JSON.stringify(user),'EX',3600);
+
     return user;
+  }
+
+  public static async followUser(from: string, to: string) {
+    const following = await prisma.follows.create({
+      data: {
+        follower: { connect: { id: from } },
+        following: { connect: { id: to } },
+      },
+      include: { following: true,follower: true },
+      
+    });
+    await redisClient.del(`FOLLOWERS:${to}`);
+    await redisClient.del(`FOLLOWING:${from}`);
+
+    return following;
+  }
+
+  public static async unfollowUser(from: string, to: string) {
+    await redisClient.del(`FOLLOWERS:${to}`);
+    await redisClient.del(`FOLLOWING:${from}`);
+    return await prisma.follows.delete({
+      where: {
+        followerId_followingId: {
+          followerId: from,
+          followingId: to,
+        },
+      },
+    });
+  }
+
+  public static async reccomendUsers(user: User) {
+    const cachedRecommendedUsers = await redisClient.get(
+      `RECOMMENDEDUSERS:${user.id}`
+    );
+    if (cachedRecommendedUsers) return JSON.parse(cachedRecommendedUsers);
+
+    const myFollowing = await prisma.follows.findMany({
+      where: {
+        follower: { id: user.id },
+      },
+      include: {
+        following: {
+          include: { followers: { select: { following: true } } },
+        },
+      },
+    });
+
+    const recommendedUsers = [] as User[];
+    myFollowing.forEach((following) => {
+      following.following.followers.forEach((element) => {
+        if (
+          myFollowing.findIndex(
+            (el) =>
+              el.following.id === element.following.id ||
+              user?.id === element.following.id
+          ) < 0
+        ) {
+          if (
+            recommendedUsers.findIndex((el) => el.id === element.following.id) <
+            0
+          )
+            recommendedUsers.push(element.following);
+        }
+      });
+    });
+    const cachedFollowers = await redisClient.get(`FOLLOWERS:${user.id}`);
+
+    let followers;
+    if (cachedFollowers) {
+      followers = JSON.parse(cachedFollowers);
+    } else {
+      followers = await prisma.follows.findMany({
+        where: {
+          following: { id: user.id },
+        },
+        include: { follower: true },
+      });
+    }
+
+    console.log("fol", followers);
+
+    followers.forEach((el: any) => {
+      if (
+        recommendedUsers.findIndex(
+          (elem) => elem.id === el.follower?.id || elem.id === el.id
+        ) < 0 &&
+        myFollowing.findIndex(
+          (elem) =>
+            elem.following.id === el.follower?.id || elem.following.id === el.id
+        ) < 0
+      ) {
+        recommendedUsers.push(el.follower);
+      }
+    });
+    await redisClient.set(
+      `RECOMMENDEDUSERS:${user.id}`,
+      JSON.stringify(recommendedUsers),'EX',3600
+    );
+    console.log("rec", recommendedUsers);
+    return recommendedUsers;
   }
 }
 
