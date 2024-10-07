@@ -13,8 +13,10 @@ const queries = {
 
   getCurrentUser: async (_: any, args: any, context: GraphqlContext) => {
     const id = context.user?.id;
-    if (!id) return null;
-    return await UserService.getUserById(id);
+    if (!id) return ;
+    const user = await UserService.getUserById(id);
+    // console.log("user", user);
+    return user;
   },
 
   getUserById: async (
@@ -91,7 +93,7 @@ const userResolverTweet = {
     },
 
     recommendedUsers: async (parent: User, _: any, context: GraphqlContext) => {
-      if (!context.user || !context.user.id) return [];
+      if (!context.user || !context.user?.id) return [];
 
       return await UserService.reccomendUsers(context.user as User);
     },

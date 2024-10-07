@@ -65,7 +65,7 @@ class UserService {
 
   public static async getUserById(id: string) {
     const cachedUser = await redisClient.get(`USER:${id}`);
-
+    // console.log("cache",cachedUser)
     if (cachedUser) {
       return JSON.parse(cachedUser);
     }
@@ -74,7 +74,8 @@ class UserService {
         id,
       },
     });
-    await redisClient.set(`USER:${id}`, JSON.stringify(user),'EX',3600);
+    // console.log("user",user)
+    await redisClient.set(`USER:${id}`, JSON.stringify(user), "EX", 3600);
 
     return user;
   }
@@ -85,8 +86,7 @@ class UserService {
         follower: { connect: { id: from } },
         following: { connect: { id: to } },
       },
-      include: { following: true,follower: true },
-      
+      include: { following: true, follower: true },
     });
     await redisClient.del(`FOLLOWERS:${to}`);
     await redisClient.del(`FOLLOWING:${from}`);
@@ -111,6 +111,7 @@ class UserService {
     const cachedRecommendedUsers = await redisClient.get(
       `RECOMMENDEDUSERS:${user.id}`
     );
+    // console.log("cache", cachedRecommendedUsers);
     if (cachedRecommendedUsers) return JSON.parse(cachedRecommendedUsers);
 
     const myFollowing = await prisma.follows.findMany({
@@ -123,6 +124,7 @@ class UserService {
         },
       },
     });
+    // console.log("myFollowing", myFollowing);
 
     const recommendedUsers = [] as User[];
     myFollowing.forEach((following) => {
@@ -143,7 +145,6 @@ class UserService {
       });
     });
     const cachedFollowers = await redisClient.get(`FOLLOWERS:${user.id}`);
-
     let followers;
     if (cachedFollowers) {
       followers = JSON.parse(cachedFollowers);
@@ -155,25 +156,25 @@ class UserService {
         include: { follower: true },
       });
     }
-
-    // console.log("fol", followers);
-
     followers.forEach((el: any) => {
       if (
         recommendedUsers.findIndex(
-          (elem) => elem.id === el.follower?.id || elem.id === el.id
+          (elem) => elem?.id === el?.follower?.id || elem.id === el?.id
         ) < 0 &&
         myFollowing.findIndex(
           (elem) =>
-            elem.following.id === el.follower?.id || elem.following.id === el.id
+            elem?.following.id === el.follower?.id ||
+            elem?.following.id === el?.id
         ) < 0
       ) {
-        recommendedUsers.push(el.follower);
+        recommendedUsers.push(el.follower || el);
       }
     });
     await redisClient.set(
       `RECOMMENDEDUSERS:${user.id}`,
-      JSON.stringify(recommendedUsers),'EX',3600
+      JSON.stringify(recommendedUsers),
+      "EX",
+      3600
     );
     // console.log("rec", recommendedUsers);
     return recommendedUsers;
