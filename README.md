@@ -9,3 +9,10 @@ AWS_DEFAULT_REGION= Your-aws-access-region
 S3_BUCKET_NAME= Your-aws-s3-bucket-for-storage
 REDIS_URL=- Yorur-upstash-redis-url
 ```
+
+THen run
+```bash
+npm run dev
+```
+
+Go to [twitter-clone-client](https://github.com/KGLikith/twitter-clone-client) and follow the instructions
