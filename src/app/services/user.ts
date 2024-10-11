@@ -75,7 +75,7 @@ class UserService {
       },
     });
     // console.log("user",user)
-    await redisClient.set(`USER:${id}`, JSON.stringify(user), "EX", 3600);
+    await redisClient.set(`USER:${id}`, JSON.stringify(user), "EX", 60);
 
     return user;
   }

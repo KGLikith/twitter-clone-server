@@ -34,7 +34,7 @@ class TweetServices {
         createdAt: "desc",
       },
     });
-    await redisClient.set("ALL_TWEETS", JSON.stringify(tweets),'EX',3600);
+    await redisClient.set("ALL_TWEETS", JSON.stringify(tweets),'EX',60);
     return tweets;
   }
 
@@ -59,7 +59,7 @@ class TweetServices {
       }
     });
     
-    await redisClient.set(`TWEET:${userId}`, JSON.stringify(tweets),'EX',3600);
+    await redisClient.set(`TWEET:${userId}`, JSON.stringify(tweets),'EX',60);
     if(!tweets) return [];
     return tweets;
   }

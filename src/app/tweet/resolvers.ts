@@ -5,17 +5,21 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import UserService from "../services/user";
 import TweetServices from "../services/tweet";
+import redisClient from "../../clients/redis/db";
 
 interface CreateTweetDataPayload {
   content: string;
   imageUrl?: string;
-  userId: string;
 }
 
 const s3Client = new S3Client({ region: process.env.AWS_DEFAULT_REGION });
 
 export const mutations = {
-  createTweet: async (_: any,{ payload }: { payload: CreateTweetDataPayload },context: GraphqlContext) => {
+  createTweet: async (
+    _: any,
+    { payload }: { payload: CreateTweetDataPayload },
+    context: GraphqlContext
+  ) => {
     if (!context.user) {
       throw new Error("Unauthorized");
     }
@@ -23,6 +27,63 @@ export const mutations = {
       ...payload,
       userId: context.user.id,
     });
+  },
+
+  LikeTweet: async (
+    _: any,
+    { tweetId }: { tweetId: string },
+    context: GraphqlContext
+  ) => {
+    if (!context.user) {
+      throw new Error("Unauthorized");
+    }
+    const liked = await prisma.tweet.update({
+      where: {
+        id: tweetId,
+      },
+      data: {
+        likes: {
+          push: context.user.id,
+        },
+      },
+    });
+    await redisClient.del("ALL_TWEETS");
+    await redisClient.del(`TWEET:${context.user.id}`);
+    if (!liked) return false;
+    return true;
+  },
+
+  UnlikeTweet: async (
+    _: any,
+    { tweetId }: { tweetId: string },
+    context: GraphqlContext
+  ) => {
+    if (!context.user) {
+      throw new Error("Unauthorized");
+    }
+    const tweet = await prisma.tweet.findUnique({
+      where: { id: tweetId },
+      select: { likes: true },
+    });
+
+    const updatedLikes = tweet?.likes.filter(
+      (likeId) => likeId !== context.user?.id
+    );
+
+    const unliked = await prisma.tweet.update({
+      where: {
+        id: tweetId,
+      },
+      data: {
+        likes: {
+          set: updatedLikes,
+        },
+      },
+    });
+    await redisClient.del("ALL_TWEETS");
+    await redisClient.del(`TWEET:${context.user.id}`);
+    if (!unliked) return false;
+    return true;
   },
 };
 
@@ -57,7 +118,7 @@ export const queries = {
       throw new Error("Invalid Image Type");
     } else {
       const putObjectCommand = new PutObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME || "",
+        Bucket: process.env.S3_BUCKET_NAME as string,
         ContentType: imageType,
         Key: `uploads/${
           context.user.id
@@ -74,6 +135,18 @@ export const tweetResolverUser = {
   Tweet: {
     user: async (parent: Tweet) => {
       return await UserService.getUserById(parent.userId);
+    },
+    likes: async (parent: Tweet) => {
+      const like = await prisma.tweet.findUnique({
+        where: {
+          id: parent.id,
+        },
+        select: {
+          likes: true,
+        },
+      });
+      if (!like) return [];
+      return like.likes;
     },
   },
 };
