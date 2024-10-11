@@ -10,7 +10,7 @@ S3_BUCKET_NAME= Your-aws-s3-bucket-for-storage
 REDIS_URL=- Yorur-upstash-redis-url
 ```
 
-THen run
+Then run
 ```bash
 npm run dev
 ```
