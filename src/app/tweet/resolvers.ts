@@ -80,11 +80,23 @@ export const mutations = {
         },
       },
     });
+    if (!unliked) return false;
     await redisClient.del("ALL_TWEETS");
     await redisClient.del(`TWEET:${context.user.id}`);
-    if (!unliked) return false;
     return true;
   },
+  deleteTweet: async( _: any, {tweetId}:{tweetId:string}, context: GraphqlContext) => {
+    if(!context.user) {
+      throw new Error("Unauthorized");
+    }
+    const del=await prisma.tweet.delete({
+      where: { id: tweetId },
+    });
+
+    await redisClient.del("ALL_TWEETS");
+    await redisClient.del(`TWEET:${context.user.id}`);
+    return del? true: false;
+  }
 };
 
 export const queries = {
