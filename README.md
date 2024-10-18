@@ -1,3 +1,5 @@
+## Go to [twitter-clone-client](https://github.com/KGLikith/twitter-clone-client) and to check out the demo
+
 ## Clone the repository 
 
 Add the environment variables to .env
