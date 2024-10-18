@@ -46,4 +46,4 @@ Then run
 npm run dev
 ```
 
-Go to [twitter-clone-client](https://github.com/KGLikith/twitter-clone-client) and follow the instructions
+## Go to [twitter-clone-client](https://github.com/KGLikith/twitter-clone-client) to run the application.
