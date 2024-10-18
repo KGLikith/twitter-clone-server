@@ -33,6 +33,9 @@ class TweetServices {
       orderBy: {
         createdAt: "desc",
       },
+      include:{
+        comments: true
+      }
     });
     await redisClient.set("ALL_TWEETS", JSON.stringify(tweets),'EX',60);
     return tweets;
@@ -43,6 +46,9 @@ class TweetServices {
       where: {
         id,
       },
+      include:{
+        comments: true
+      }
     });
     return tweet;
   }

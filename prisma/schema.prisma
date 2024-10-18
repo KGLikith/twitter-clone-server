@@ -22,6 +22,8 @@ model User {
 
   followers Follows[] @relation("follower")
   follows   Follows[] @relation("following")
+
+  Commnet Comment[]
 }
 
 model Tweet {
@@ -29,8 +31,23 @@ model Tweet {
   content  String
   imageUrl String?
   userId   String
+  
   user     User    @relation(fields: [userId], references: [id])
   likes    String[]
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Comment{
+  id     String  @id @default(cuid())
+  content String
+  userId String
+  likes String[]
+  user  User    @relation(fields: [userId], references: [id])
+  tweetId String
+  tweet   Tweet   @relation(fields: [tweetId], references: [id],onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

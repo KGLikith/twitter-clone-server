@@ -11,6 +11,10 @@ interface CreateTweetDataPayload {
   content: string;
   imageUrl?: string;
 }
+interface createCommentPayload{
+  content: string;
+  tweetId: string;
+}
 
 const s3Client = new S3Client({ region: process.env.AWS_DEFAULT_REGION });
 
@@ -96,6 +100,74 @@ export const mutations = {
     await redisClient.del("ALL_TWEETS");
     await redisClient.del(`TWEET:${context.user.id}`);
     return del? true: false;
+  },
+  createComment: async(_:any,{ payload }: { payload: createCommentPayload }, context: GraphqlContext) => {
+    if(!context.user) {
+      throw new Error("Unauthorized");
+    }
+    const {tweetId,content}=payload;
+    const comment= await prisma.comment.create({
+      data: {
+        content:content,
+        userId: context.user.id,
+        tweetId,
+      },
+      include:{
+        user:true,
+        tweet:true
+      }
+    });
+    return comment;
+  },
+  deleteComment: async(_: any, {commentId}:{commentId:string}, context: GraphqlContext) => {
+    if(!context.user) {
+      throw new Error("Unauthorized");
+    }
+    const del=await prisma.comment.delete({
+      where: { id: commentId },
+    });
+    return del? true: false;
+  },
+  likeComment: async(_: any, {commentId}:{commentId:string}, context: GraphqlContext) => {
+    if(!context.user) {
+      throw new Error("Unauthorized");
+    }
+    const liked= await prisma.comment.update({
+      where: {
+        id: commentId,
+      },
+      data: {
+        likes: {
+          push: context.user.id,
+        },
+      },
+    });
+    return liked? true: false;
+  },
+  unlikeComment: async(_: any, {commentId}:{commentId:string}, context: GraphqlContext) => {
+    if(!context.user) {
+      throw new Error("Unauthorized");
+    }
+    const comment= await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { likes: true },
+    });
+
+    const updatedLikes = comment?.likes.filter(
+      (likeId) => likeId !== context.user?.id
+    );
+
+    const unliked = await prisma.comment.update({
+      where: {
+        id: commentId,
+      },
+      data: {
+        likes: {
+          set: updatedLikes,
+        },
+      },
+    });
+    return unliked? true: false;
   }
 };
 
@@ -160,6 +232,28 @@ export const tweetResolverUser = {
       if (!like) return [];
       return like.likes;
     },
+    comments: async (parent: Tweet)=>{
+      const comment= await prisma.comment.findMany({
+        where: {
+          tweetId: parent.id,
+        },
+        include:{
+          user:true,
+          tweet:true
+        },
+        orderBy:{
+          createdAt:"desc"
+        }
+      });
+      if(!comment) return [];
+      return comment.map(c => ({
+        id: c.id,
+        content: c.content,
+        likes: c.likes,
+        user: c.user,
+        tweet: c.tweet
+      }));
+    }
   },
 };
 
