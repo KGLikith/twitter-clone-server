@@ -1,3 +1,22 @@
+# Overview
+## Features
+
+- **User Authentication**: Secure authentication using jwt.
+- **Data Management**: Utilizes Prisma ORM for efficient database interactions.
+- **Caching**: Employs Redis for caching, enhancing performance and response times.
+- **Image Storage**: Integrates with AWS S3 for secure storage and retrieval of images.
+- **Real-time Updates**: Potential for real-time interactions and notifications.
+
+## Technologies Used
+
+- **GraphQL**: API for flexible data querying and manipulation.
+- **Apollo Client**: Manages GraphQL queries and mutations.
+- **Prisma**: Database ORM for managing data and migrations.
+- **Redis**: Caching solution for improved performance.
+- **AWS S3**: Used for storing uploaded images.
+
+# Run It Locally
+
 ## Go to [twitter-clone-client](https://github.com/KGLikith/twitter-clone-client) and to check out the demo
 
 ## Clone the repository 
