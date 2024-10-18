@@ -12,6 +12,11 @@ S3_BUCKET_NAME= aws-s3-bucket-for-storage
 REDIS_URL=- upstash-redis-url
 ```
 
+Then run 
+```
+npx prisma migrate dev --name some_name
+```
+
 Then run
 ```bash
 npm run dev
