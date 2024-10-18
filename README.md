@@ -15,11 +15,14 @@
 - **Redis**: Caching solution for improved performance.
 - **AWS S3**: Used for storing uploaded images.
 
-# Run It Locally
-
 ## Go to [twitter-clone-client](https://github.com/KGLikith/twitter-clone-client) and to check out the demo
 
-## Clone the repository 
+# Run It Locally
+
+### Clone this repository
+```
+git clone https://github.com/KGLikith/twitter-clone-server.git
+```
 
 Add the environment variables to .env
 
