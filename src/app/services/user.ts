@@ -88,15 +88,15 @@ class UserService {
       },
       include: { following: true, follower: true },
     });
-    await redisClient.del(`FOLLOWERS:${to}`);
-    await redisClient.del(`FOLLOWING:${from}`);
+    redisClient.del(`FOLLOWERS:${to}`);
+    redisClient.del(`FOLLOWING:${from}`);
 
     return following;
   }
 
   public static async unfollowUser(from: string, to: string) {
-    await redisClient.del(`FOLLOWERS:${to}`);
-    await redisClient.del(`FOLLOWING:${from}`);
+    redisClient.del(`FOLLOWERS:${to}`);
+    redisClient.del(`FOLLOWING:${from}`);
     return await prisma.follows.delete({
       where: {
         followerId_followingId: {

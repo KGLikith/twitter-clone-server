@@ -19,9 +19,9 @@ class TweetServices {
         user: { connect: { id: payload.userId } },
       },
     });
-    await redisClient.setex(`RateLimit:tweet:${payload.userId}`, 10, 1);
-    await redisClient.del("ALL_TWEETS");
-    await redisClient.del(`TWEET:${payload.userId}`);
+     redisClient.setex(`RateLimit:tweet:${payload.userId}`, 10, 1);
+     redisClient.del("ALL_TWEETS");
+     redisClient.del(`TWEET:${payload.userId}`);
 
     return tweet;
   }
@@ -37,7 +37,7 @@ class TweetServices {
         comments: true
       }
     });
-    await redisClient.set("ALL_TWEETS", JSON.stringify(tweets),'EX',60);
+    redisClient.set("ALL_TWEETS", JSON.stringify(tweets),'EX',60);
     return tweets;
   }
 
@@ -65,7 +65,7 @@ class TweetServices {
       }
     });
     
-    await redisClient.set(`TWEET:${userId}`, JSON.stringify(tweets),'EX',60);
+    redisClient.set(`TWEET:${userId}`, JSON.stringify(tweets),'EX',60);
     if(!tweets) return [];
     return tweets;
   }

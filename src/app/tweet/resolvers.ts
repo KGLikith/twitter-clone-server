@@ -96,7 +96,7 @@ export const mutations = {
     const del=await prisma.tweet.delete({
       where: { id: tweetId },
     });
-
+    
     await redisClient.del("ALL_TWEETS");
     await redisClient.del(`TWEET:${context.user.id}`);
     return del? true: false;
