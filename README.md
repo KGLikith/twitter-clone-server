@@ -24,6 +24,10 @@
 git clone https://github.com/KGLikith/twitter-clone-server.git
 ```
 
+```
+npm install
+```
+
 Add the environment variables to .env
 
 ```bash
