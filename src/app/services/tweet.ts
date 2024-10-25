@@ -9,8 +9,11 @@ interface CreateTweetDataPayload {
 
 class TweetServices {
   public static async createTweet(payload: CreateTweetDataPayload) {
-    const ratelimitFlag = await redisClient.get(`RateLimit:tweet:${payload.userId}`);
-    if(ratelimitFlag) throw new Error("Please wait before creating another tweet");
+    const ratelimitFlag = await redisClient.get(
+      `RateLimit:tweet:${payload.userId}`
+    );
+    if (ratelimitFlag)
+      throw new Error("Please wait before creating another tweet");
 
     const tweet = await prisma.tweet.create({
       data: {
@@ -19,25 +22,27 @@ class TweetServices {
         user: { connect: { id: payload.userId } },
       },
     });
-     redisClient.setex(`RateLimit:tweet:${payload.userId}`, 10, 1);
-     redisClient.del("ALL_TWEETS");
-     redisClient.del(`TWEET:${payload.userId}`);
+    redisClient.setex(`RateLimit:tweet:${payload.userId}`, 5, 1);
+    redisClient.del("ALL_TWEETS");
+    redisClient.del(`TWEET:${payload.userId}`);
 
     return tweet;
   }
 
   public static async getAllTweets() {
     const chachedTweets = await redisClient.get("ALL_TWEETS");
-    if(chachedTweets) return JSON.parse(chachedTweets);
+    if (chachedTweets) {
+      return JSON.parse(chachedTweets);
+    }
     const tweets = await prisma.tweet.findMany({
       orderBy: {
         createdAt: "desc",
       },
-      include:{
-        comments: true
-      }
+      include: {
+        comments: { orderBy: { createdAt: "desc" } },
+      },
     });
-    redisClient.set("ALL_TWEETS", JSON.stringify(tweets),'EX',60);
+    redisClient.set("ALL_TWEETS", JSON.stringify(tweets), "EX", 360);
     return tweets;
   }
 
@@ -46,27 +51,30 @@ class TweetServices {
       where: {
         id,
       },
-      include:{
-        comments: true
-      }
+      include: {
+        comments: { include: { user: true }, orderBy: { createdAt: "desc" } },
+      },
     });
     return tweet;
   }
 
   public static async getUserTweets(userId: string) {
     const cachedUserTweets = await redisClient.get(`TWEET:${userId}`);
-    if(cachedUserTweets) return JSON.parse(cachedUserTweets);
+    if (cachedUserTweets) return JSON.parse(cachedUserTweets);
     const tweets = await prisma.tweet.findMany({
       where: {
         userId,
       },
-      orderBy:{
-        createdAt: "desc"
-      }
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        comments: {orderBy:{createdAt:"desc"}},
+      },
     });
-    
-    redisClient.set(`TWEET:${userId}`, JSON.stringify(tweets),'EX',60);
-    if(!tweets) return [];
+
+    redisClient.set(`TWEET:${userId}`, JSON.stringify(tweets), "EX", 60);
+    if (!tweets) return [];
     return tweets;
   }
 }

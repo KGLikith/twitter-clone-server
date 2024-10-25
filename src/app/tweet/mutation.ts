@@ -1,5 +1,5 @@
 export const mutations = `#graphql
-    createTweet(payload: CreateTweetData!): Tweet
+    createTweet(payload: CreateTweetData!): Boolean
     LikeTweet(tweetId: ID!): Boolean
     UnlikeTweet(tweetId: ID!): Boolean
     deleteTweet(tweetId: ID!): Boolean

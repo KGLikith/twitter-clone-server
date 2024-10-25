@@ -75,7 +75,7 @@ class UserService {
       },
     });
     // console.log("user",user)
-    await redisClient.set(`USER:${id}`, JSON.stringify(user), "EX", 60);
+    await redisClient.set(`USER:${id}`, JSON.stringify(user));
 
     return user;
   }
@@ -170,6 +170,28 @@ class UserService {
         recommendedUsers.push(el.follower || el);
       }
     });
+
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+    const newUsers = await prisma.user.findMany({
+      where: {
+        createdAt: {
+          gte: oneDayAgo, 
+        },
+        id: {
+          not: user.id, 
+          notIn: myFollowing.map((f) => f.following.id), 
+        },
+      },
+    });
+
+    newUsers.forEach((newUser) => {
+      if (recommendedUsers.findIndex((u) => u.id === newUser.id) < 0) {
+        recommendedUsers.push(newUser);
+      }
+    });
+    
     await redisClient.set(
       `RECOMMENDEDUSERS:${user.id}`,
       JSON.stringify(recommendedUsers),

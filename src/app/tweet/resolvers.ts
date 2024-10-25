@@ -6,6 +6,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import UserService from "../services/user";
 import TweetServices from "../services/tweet";
 import redisClient from "../../clients/redis/db";
+import { error } from "console";
 
 interface CreateTweetDataPayload {
   content: string;
@@ -27,10 +28,15 @@ export const mutations = {
     if (!context.user) {
       throw new Error("Unauthorized");
     }
-    return await TweetServices.createTweet({
-      ...payload,
-      userId: context.user.id,
-    });
+    try{
+      await TweetServices.createTweet({
+        ...payload,
+        userId: context.user.id,
+      })
+      return true;
+    }catch(err){
+      throw error(err)
+    }
   },
 
   LikeTweet: async (
@@ -51,9 +57,9 @@ export const mutations = {
         },
       },
     });
+    if (!liked) return false;
     await redisClient.del("ALL_TWEETS");
     await redisClient.del(`TWEET:${context.user.id}`);
-    if (!liked) return false;
     return true;
   },
 
@@ -89,6 +95,7 @@ export const mutations = {
     await redisClient.del(`TWEET:${context.user.id}`);
     return true;
   },
+  
   deleteTweet: async( _: any, {tweetId}:{tweetId:string}, context: GraphqlContext) => {
     if(!context.user) {
       throw new Error("Unauthorized");
@@ -180,6 +187,10 @@ export const queries = {
     return await TweetServices.getTweetById(id);
   },
 
+  getUserTweets: async(_: any, {userId}:{userId:string}, context: GraphqlContext) => {
+    return await TweetServices.getUserTweets(userId);
+  },
+
   getSignedURLForTweet: async (
     _: any,
     { imageType, imageName }: { imageType: string; imageName: string },
@@ -220,40 +231,6 @@ export const tweetResolverUser = {
     user: async (parent: Tweet) => {
       return await UserService.getUserById(parent.userId);
     },
-    likes: async (parent: Tweet) => {
-      const like = await prisma.tweet.findUnique({
-        where: {
-          id: parent.id,
-        },
-        select: {
-          likes: true,
-        },
-      });
-      if (!like) return [];
-      return like.likes;
-    },
-    comments: async (parent: Tweet)=>{
-      const comment= await prisma.comment.findMany({
-        where: {
-          tweetId: parent.id,
-        },
-        include:{
-          user:true,
-          tweet:true
-        },
-        orderBy:{
-          createdAt:"desc"
-        }
-      });
-      if(!comment) return [];
-      return comment.map(c => ({
-        id: c.id,
-        content: c.content,
-        likes: c.likes,
-        user: c.user,
-        tweet: c.tweet
-      }));
-    }
   },
 };
 

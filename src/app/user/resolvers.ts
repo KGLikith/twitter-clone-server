@@ -54,10 +54,6 @@ const mutations = {
 
 const userResolverTweet = {
   User: {
-    tweets: async (parent: User) => {
-      return await TweetServices.getUserTweets(parent.id);
-    },
-
     followers: async (parent: User) => {
       const cachedFollowers = await redisClient.get(`FOLLOWERS:${parent.id}`);
       if (cachedFollowers) return JSON.parse(cachedFollowers);
