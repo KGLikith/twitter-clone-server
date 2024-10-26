@@ -54,10 +54,11 @@ class UserService {
           profileImageUrl: data.picture,
         },
       });
-
       const userToken = await JWTService.generateJWT(user);
       return userToken;
     }
+    await redisClient.del(`RECOMMENDEDUSERS:${user.id}`);
+    
     const userToken = await JWTService.generateJWT(user);
     // console.log(userToken);
     return userToken;
