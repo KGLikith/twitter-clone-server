@@ -3,7 +3,7 @@
 - **User Authentication**: Secure authentication using jwt.
 - **Data Management**: Utilizes Prisma ORM for efficient database interactions.
 - **Caching**: Employs Redis for caching, enhancing performance and response times.
-- **Image Storage**: Integrates with AWS S3 for secure storage and retrieval of images.
+- **Image Storage**: Integrates with AWS S3 for secure storage and retrieval of images. 
 - **Real-time Updates**: Potential for real-time interactions and notifications.
 
 ## Technologies Used
