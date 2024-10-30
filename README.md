@@ -6,7 +6,7 @@
 - **Image Storage**: Integrates with AWS S3 for secure storage and retrieval of images. 
 - **Real-time Updates**: Potential for real-time interactions and notifications.
 
-## Technologies Used
+## Technologies Used 
 
 - **GraphQL**: API for flexible data querying and manipulation.
 - **Apollo Client**: Manages GraphQL queries and mutations.
