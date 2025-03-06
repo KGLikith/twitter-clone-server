@@ -32,7 +32,7 @@ model Tweet {
   imageUrl String?
   userId   String
   
-  user     User    @relation(fields: [userId], references: [id])
+  user     User    @relation(fields: [userId], references: [id],onDelete: Cascade)
   likes    String[]
   comments Comment[]
 
@@ -45,7 +45,7 @@ model Comment{
   content String
   userId String
   likes String[]
-  user  User    @relation(fields: [userId], references: [id])
+  user  User    @relation(fields: [userId], references: [id],onDelete: Cascade)
   tweetId String
   tweet   Tweet   @relation(fields: [tweetId], references: [id],onDelete: Cascade)
 
